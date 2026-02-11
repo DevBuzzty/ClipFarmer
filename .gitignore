@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*$py.class
+downloads/
+clips/
+node_modules/
+dist/
+frontend/backend_dist/
+.env
+*.log
+screenshot.jpg

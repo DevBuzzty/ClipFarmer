@@ -1,0 +1,10 @@
+yt-dlp
+faster-whisper
+google-generativeai
+moviepy
+flask
+flask-cors
+python-dotenv
+opencv-python
+Pillow
+pyinstaller

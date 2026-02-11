@@ -1,0 +1,32 @@
+{
+  "name": "twitch-viral-clip-automator",
+  "version": "1.0.0",
+  "description": "AI-powered Twitch VOD clip automator",
+  "main": "frontend/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.twitch.viral.clip.automator",
+    "win": {
+      "target": "portable"
+    },
+    "extraResources": [
+      {
+        "from": "frontend/backend_dist",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}

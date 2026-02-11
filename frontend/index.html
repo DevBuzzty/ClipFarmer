@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitch Viral Clip Automator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Twitch Viral Clip Automator</h1>
+
+        <div class="input-group">
+            <input type="text" id="vod-url" placeholder="Twitch VOD URL hier einfügen...">
+            <button id="analyze-btn">Analysieren</button>
+        </div>
+
+        <div id="status">Bereit zum Starten...</div>
+
+        <div id="clip-container" class="clip-list">
+            <!-- Clips werden hier dynamisch eingefügt -->
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
