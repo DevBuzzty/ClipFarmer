@@ -8,7 +8,11 @@ from analyzer import Analyzer
 from editor import Editor
 from social_uploader import SocialUploader
 from utils import extract_screenshot
+from task_manager import TaskManager
 import json
+import threading
+import uuid
+import time
 
 load_dotenv()
 
@@ -36,12 +40,21 @@ transcriber = Transcriber(model_size=config.get('WHISPER_MODEL', 'base'), device
 analyzer = Analyzer(api_key=config.get('GEMINI_API_KEY'))
 editor = Editor()
 
-# Global state to keep track of current video info
+# Global state
 current_video = {
     "path": None,
     "facecam_coords": None,
     "gameplay_coords": None
 }
+
+task_manager = TaskManager()
+
+@app.route('/status/<task_id>', methods=['GET'])
+def get_status(task_id):
+    task = task_manager.get_task(task_id)
+    if not task:
+        return jsonify({"error": "Task not found"}), 404
+    return jsonify(task)
 
 @app.route('/settings', methods=['GET', 'POST'])
 def handle_settings():
@@ -66,32 +79,46 @@ def analyze():
     if not url:
         return jsonify({"error": "No URL provided"}), 400
 
-    try:
-        # 1. Download Video
-        video_path = downloader.download_video(url)
-        current_video["path"] = video_path
+    task_id = str(uuid.uuid4())
+    task_manager.create_task(task_id, "starting")
 
-        # 2. Extract Audio & Transcribe
-        audio_path = downloader.extract_audio(video_path)
-        transcript = transcriber.transcribe(audio_path)
+    def run_analyze():
+        try:
+            task_manager.update_task(task_id, "downloading", progress=10)
+            video_path = downloader.download_video(url)
+            current_video["path"] = video_path
 
-        # 3. Find Viral Clips
-        clips = analyzer.find_viral_clips(transcript)
+            task_manager.update_task(task_id, "transcribing", progress=40)
+            audio_path = downloader.extract_audio(video_path)
+            transcript = transcriber.transcribe(audio_path)
 
-        # 4. Detect Facecam (sample multiple points to avoid starting screens)
-        sample_times = [300, 600, 1200] # 5, 10, 20 minutes
-        for t in sample_times:
-            screenshot_path = f"screenshot_{t}.jpg"
-            if extract_screenshot(video_path, t, screenshot_path):
-                coords = analyzer.detect_facecam(screenshot_path)
-                if coords and coords.get('facecam'):
-                    current_video["facecam_coords"] = coords.get('facecam')
-                    current_video["gameplay_coords"] = coords.get('gameplay')
-                    break
+            task_manager.update_task(task_id, "analyzing", progress=70)
+            clips = analyzer.find_viral_clips(transcript)
 
-        return jsonify({"clips": clips})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+            task_manager.update_task(task_id, "detecting_facecam", progress=90)
+            sample_times = [300, 600, 1200]
+            for t in sample_times:
+                screenshot_path = f"screenshot_{t}.jpg"
+                if extract_screenshot(video_path, t, screenshot_path):
+                    coords = analyzer.detect_facecam(screenshot_path)
+                    if coords and coords.get('facecam'):
+                        current_video["facecam_coords"] = coords.get('facecam')
+                        current_video["gameplay_coords"] = coords.get('gameplay')
+                        break
+
+            task_manager.update_task(task_id, "completed", progress=100, result={"clips": clips})
+            # Cleanup audio and screenshots
+            if os.path.exists(audio_path):
+                os.remove(audio_path)
+            for t in sample_times:
+                s_path = f"screenshot_{t}.jpg"
+                if os.path.exists(s_path):
+                    os.remove(s_path)
+        except Exception as e:
+            task_manager.update_task(task_id, "failed", error=str(e))
+
+    threading.Thread(target=run_analyze).start()
+    return jsonify({"task_id": task_id})
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -105,18 +132,24 @@ def upload():
     if not video_path or not os.path.exists(video_path):
         return jsonify({"error": "Video Datei nicht gefunden"}), 400
 
-    try:
-        if platform == 'youtube':
-            video_id = uploader.upload_to_youtube(video_path, title, description, tags)
-            return jsonify({"success": True, "video_id": video_id})
-        elif platform == 'tiktok':
-            # Placeholder call
-            res = uploader.upload_to_tiktok(video_path, description)
-            return jsonify({"success": True, "res": res})
-        else:
-            return jsonify({"error": "Unbekannte Plattform"}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    task_id = str(uuid.uuid4())
+    task_manager.create_task(task_id, f"uploading_to_{platform}")
+
+    def run_upload():
+        try:
+            if platform == 'youtube':
+                video_id = uploader.upload_to_youtube(video_path, title, description, tags)
+                task_manager.update_task(task_id, "completed", progress=100, result={"video_id": video_id})
+            elif platform == 'tiktok':
+                res = uploader.upload_to_tiktok(video_path, description)
+                task_manager.update_task(task_id, "completed", progress=100, result={"res": res})
+            else:
+                task_manager.update_task(task_id, "failed", error="Unbekannte Plattform")
+        except Exception as e:
+            task_manager.update_task(task_id, "failed", error=str(e))
+
+    threading.Thread(target=run_upload).start()
+    return jsonify({"task_id": task_id})
 
 @app.route('/export', methods=['POST'])
 def export():
@@ -125,26 +158,30 @@ def export():
     if not clip_data or not current_video["path"]:
         return jsonify({"error": "Missing data or video not analyzed"}), 400
 
-    try:
-        output_filename = f"clip_{int(clip_data['start'])}.mp4"
+    task_id = str(uuid.uuid4())
+    task_manager.create_task(task_id, "exporting")
 
-        # Use detected coords or defaults
-        facecam = current_video["facecam_coords"] or [0, 0, 300, 300] # dummy fallback
-        gameplay = current_video["gameplay_coords"] or [0, 0, 1000, 1000] # dummy fallback
+    def run_export():
+        try:
+            output_filename = f"clip_{int(clip_data['start'])}.mp4"
+            facecam = current_video["facecam_coords"] or [0, 0, 300, 300]
+            gameplay = current_video["gameplay_coords"] or [0, 0, 1000, 1000]
 
-        output_path = editor.process_clip(
-            current_video["path"],
-            clip_data['start'],
-            clip_data['end'],
-            facecam,
-            gameplay,
-            output_filename,
-            use_gpu=config.get('USE_GPU', False)
-        )
+            output_path = editor.process_clip(
+                current_video["path"],
+                clip_data['start'],
+                clip_data['end'],
+                facecam,
+                gameplay,
+                output_filename,
+                use_gpu=config.get('USE_GPU', False)
+            )
+            task_manager.update_task(task_id, "completed", progress=100, result={"path": output_path})
+        except Exception as e:
+            task_manager.update_task(task_id, "failed", error=str(e))
 
-        return jsonify({"success": True, "path": output_path})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    threading.Thread(target=run_export).start()
+    return jsonify({"task_id": task_id})
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))

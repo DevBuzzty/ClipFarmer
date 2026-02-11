@@ -75,10 +75,29 @@ class Editor:
 
         output_path = os.path.join(self.output_dir, output_filename)
         codec = "h264_nvenc" if use_gpu else "libx264"
+
+        # Optimization: use more threads and a faster preset
+        write_args = {
+            "codec": codec,
+            "audio_codec": "aac",
+            "fps": video.fps,
+            "threads": 4,
+            "preset": "ultrafast" if not use_gpu else None, # nvenc doesn't use 'preset' the same way
+            "logger": None # Disable moviepy logging for performance
+        }
+
         try:
-            final_video.write_videofile(output_path, codec=codec, audio_codec="aac", fps=video.fps)
+            final_video.write_videofile(output_path, **{k: v for k, v in write_args.items() if v is not None})
         except:
             # Fallback to cpu
-            final_video.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=video.fps)
+            write_args["codec"] = "libx264"
+            write_args["preset"] = "ultrafast"
+            final_video.write_videofile(output_path, **{k: v for k, v in write_args.items() if v is not None})
+
+        # Memory cleanup
+        video.close()
+        face_source.close()
+        game_source.close()
+        final_video.close()
 
         return output_path
