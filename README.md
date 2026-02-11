@@ -49,7 +49,31 @@ Ein KI-gestütztes Tool zur automatischen Erstellung von viralen Twitch-Clips (9
 5. Der fertige Clip wird im 9:16 Format im Ordner `clips/` gespeichert.
 
 ## Build (Windows)
-Der Build erfolgt automatisch via GitHub Actions bei einem Push auf den `main` Branch. Die `.exe` wird als GitHub Release bereitgestellt.
+
+Es gibt zwei Wege, die `.exe` zu erstellen:
+
+### 1. Automatisch über GitHub (Empfohlen)
+Da das Projekt für GitHub Actions konfiguriert ist, wird bei jedem **Push auf den `main` Branch** automatisch ein Build gestartet.
+- Gehen Sie in Ihrem GitHub-Repository auf den Tab **"Actions"**.
+- Sobald der Workflow "Build and Release Windows App" abgeschlossen ist, finden Sie die fertige `.exe` unter **"Releases"** auf der rechten Seite der Repository-Startseite.
+
+### 2. Lokal auf Ihrem PC
+Wenn Sie die `.exe` manuell auf Ihrem Windows-Rechner erstellen möchten:
+
+1. **Backend kompilieren**:
+   ```bash
+   pip install pyinstaller
+   pyinstaller --onefile --distpath frontend/backend_dist --collect-all faster_whisper --collect-all moviepy backend/app.py
+   ```
+   Dies erstellt eine `app.exe` im Ordner `frontend/backend_dist`.
+
+2. **Frontend & App verpacken**:
+   ```bash
+   npm run build
+   ```
+   Die fertige App (als Portable `.exe` oder Installer) befindet sich danach im Ordner `dist/`.
+
+> **Hinweis**: Für den lokalen Build müssen alle Abhängigkeiten aus `requirements.txt` und `package.json` installiert sein.
 
 ## API-Limits & Hardware
 - **Gemini 1.5 Pro**: Das Modell hat ein sehr großes Kontext-Fenster, was die Analyse kompletter Streams ermöglicht. Achten Sie auf Ihre API-Quota im Google AI Studio.
