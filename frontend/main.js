@@ -1,7 +1,8 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const dotenv = require('dotenv');
+const fs = require('fs');
 
 dotenv.config();
 
@@ -29,23 +30,62 @@ function createWindow() {
 function startPythonBackend() {
   const isDev = !app.isPackaged;
   let backendPath;
+  let args = [];
 
   if (isDev) {
     const pythonPath = process.env.PYTHON_PATH || 'python';
     backendPath = path.join(__dirname, '../backend/app.py');
-    pythonProcess = spawn(pythonPath, [backendPath]);
+    args = [backendPath];
+
+    if (!fs.existsSync(backendPath)) {
+      console.error(`Backend script not found at ${backendPath}`);
+      return;
+    }
+
+    pythonProcess = spawn(pythonPath, args);
   } else {
-    backendPath = path.join(process.resourcesPath, 'backend', 'app.exe');
-    pythonProcess = spawn(backendPath);
+    // Try multiple possible locations for production
+    const possiblePaths = [
+      path.join(process.resourcesPath, 'backend', 'app.exe'),
+      path.join(process.resourcesPath, 'app.asar.unpacked', 'backend', 'app.exe'),
+      path.join(path.dirname(app.getPath('exe')), 'resources', 'backend', 'app.exe')
+    ];
+
+    backendPath = possiblePaths.find(p => fs.existsSync(p));
+
+    if (!backendPath) {
+      const errorMsg = `Backend executable not found. Searched in:\n${possiblePaths.join('\n')}`;
+      console.error(errorMsg);
+      dialog.showErrorBox('Backend Fehler', errorMsg);
+      return;
+    }
+
+    try {
+      pythonProcess = spawn(backendPath, [], {
+        windowsHide: true,
+        shell: false
+      });
+    } catch (err) {
+      console.error('Failed to spawn backend process:', err);
+      dialog.showErrorBox('Backend Fehler', `Konnte Backend nicht starten: ${err.message}`);
+      return;
+    }
   }
 
-  pythonProcess.stdout.on('data', (data) => {
-    console.log(`Python: ${data}`);
-  });
+  if (pythonProcess) {
+    pythonProcess.on('error', (err) => {
+      console.error('Failed to start backend process:', err);
+      dialog.showErrorBox('Backend Fehler', `Konnte Backend-Prozess nicht starten: ${err.message}`);
+    });
 
-  pythonProcess.stderr.on('data', (data) => {
-    console.error(`Python Error: ${data}`);
-  });
+    pythonProcess.stdout.on('data', (data) => {
+      console.log(`Python: ${data}`);
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      console.error(`Python Error: ${data}`);
+    });
+  }
 }
 
 app.whenReady().then(() => {

@@ -15,6 +15,11 @@ async function pollTask(taskId, onProgress) {
         const interval = setInterval(async () => {
             try {
                 const status = await window.api.fetch(`${BACKEND_URL}/status/${taskId}`, { method: 'GET' });
+
+                if (!status) {
+                    throw new Error('Verbindung zum Backend verloren.');
+                }
+
                 if (onProgress) onProgress(status);
 
                 if (status.status === 'completed') {
@@ -101,11 +106,13 @@ saveSettingsBtn.addEventListener('click', async () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(settings)
         });
-        if (response.success) {
+        if (response && response.success) {
             alert('Einstellungen erfolgreich gespeichert!');
+        } else {
+            alert('Backend nicht erreichbar. Bitte App neu starten.');
         }
     } catch (e) {
-        alert('Fehler beim Speichern: ' + e.message);
+        alert('Verbindungsfehler zum Backend: ' + e.message + '\nStellen Sie sicher, dass das Programm nicht von einer Firewall blockiert wird.');
     }
 });
 
@@ -121,11 +128,17 @@ analyzeBtn.addEventListener('click', async () => {
     clipContainer.innerHTML = '';
 
     try {
-        const { task_id } = await window.api.fetch(`${BACKEND_URL}/analyze`, {
+        const response = await window.api.fetch(`${BACKEND_URL}/analyze`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url })
         });
+
+        if (!response || !response.task_id) {
+            throw new Error('Backend lieferte keine Task-ID. Ist der Server gestartet?');
+        }
+
+        const { task_id } = response;
 
         const result = await pollTask(task_id, (status) => {
             let msg = 'Verarbeitung...';
