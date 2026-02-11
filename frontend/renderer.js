@@ -3,6 +3,7 @@ const urlInput = document.getElementById('vod-url');
 const statusDiv = document.getElementById('status');
 const clipContainer = document.getElementById('clip-container');
 const saveSettingsBtn = document.getElementById('save-settings-btn');
+const twitchLoginBtn = document.getElementById('twitch-login-btn');
 const exportAllBtn = document.getElementById('export-all-btn');
 const progressBar = document.getElementById('progress-bar');
 const progressContainer = document.getElementById('progress-container');
@@ -63,9 +64,23 @@ window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('set-tiktok-session').value = settings.TIKTOK_SESSION_ID || '';
             document.getElementById('set-gpu').checked = settings.USE_GPU || false;
             document.getElementById('set-whisper-model').value = settings.WHISPER_MODEL || 'base';
+
+            if (settings.TWITCH_ACCESS_TOKEN) {
+                twitchLoginBtn.textContent = 'Twitch: Eingeloggt ✓';
+                twitchLoginBtn.style.background = '#9146ff';
+            }
         }
     } catch (e) {
         console.error("Failed to load settings", e);
+    }
+});
+
+twitchLoginBtn.addEventListener('click', async () => {
+    try {
+        const { url } = await window.api.fetch(`${BACKEND_URL}/twitch/login`);
+        window.open(url);
+    } catch (e) {
+        alert('Twitch Login Fehler: ' + e.message);
     }
 });
 
@@ -162,7 +177,7 @@ function displayClips(clips, vodUrl) {
             </div>
             <div class="actions">
                 <button class="btn-secondary" onclick="window.open('${timestampUrl}')">Vorschau</button>
-                <button class="btn-secondary" onclick="window.open('${twitchClipUrl}')">Twitch Clip Link</button>
+                <button class="btn-secondary" style="background: #9146ff;" onclick="window.open('${twitchClipUrl}')">Twitch Clipping Link</button>
                 <button onclick="exportClip(${index}, ${JSON.stringify(clip).replace(/"/g, '&quot;')})">Exportieren</button>
             </div>
         `;

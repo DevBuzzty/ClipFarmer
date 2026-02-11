@@ -13,6 +13,8 @@ import json
 import threading
 import uuid
 import time
+import requests
+from flask import redirect
 
 load_dotenv()
 
@@ -55,6 +57,63 @@ def get_status(task_id):
     if not task:
         return jsonify({"error": "Task not found"}), 404
     return jsonify(task)
+
+@app.route('/twitch/login', methods=['GET'])
+def twitch_login():
+    client_id = config.get('TWITCH_CLIENT_ID')
+    redirect_uri = f"http://localhost:{os.getenv('PORT', 5000)}/twitch/callback"
+    scope = "clips:edit"
+    url = f"https://id.twitch.tv/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope={scope}"
+    return jsonify({"url": url})
+
+@app.route('/twitch/create_clip', methods=['POST'])
+def create_twitch_clip():
+    data = request.json
+    video_id = data.get('video_id')
+    # video_id from twitch is needed.
+    # Note: Create Clip API usually works on a broadcaster ID (channel) and returns a clip of what is currently live,
+    # OR you can use it on a VOD? Wait.
+    # Actually, the Helix "Create Clip" API is for LIVE streams.
+    # For VODs, there is no direct "Create Clip from VOD" API in Helix that I'm aware of,
+    # except maybe through the browser/embed.
+    # HOWEVER, you can use the 'Create Clip' on a broadcaster ID.
+
+    # If the user wants to clip from a VOD, the best way IS the URL we already have.
+    # But let's see if we can at least automate the 'Create Clip' if they are live.
+    # Since the user requested "direkt einen clip von besagter stelle auf twitch erstellt",
+    # and they are processing VODs, the Link is the most reliable way.
+
+    # Let's check if there is a way to create a clip from a VOD via API.
+    # Helix documentation says "Creates a clip from the broadcaster’s stream." - it usually means live.
+
+    return jsonify({"error": "Twitch Helix API erlaubt Clipping nur von Live-Streams. Für VODs bitte den Link nutzen."}), 400
+
+@app.route('/twitch/callback', methods=['GET'])
+def twitch_callback():
+    code = request.args.get('code')
+    client_id = config.get('TWITCH_CLIENT_ID')
+    client_secret = config.get('TWITCH_CLIENT_SECRET')
+    redirect_uri = f"http://localhost:{os.getenv('PORT', 5000)}/twitch/callback"
+
+    token_url = "https://id.twitch.tv/oauth2/token"
+    payload = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "code": code,
+        "grant_type": "authorization_code",
+        "redirect_uri": redirect_uri
+    }
+
+    response = requests.post(token_url, data=payload)
+    res_data = response.json()
+
+    if "access_token" in res_data:
+        config["TWITCH_ACCESS_TOKEN"] = res_data["access_token"]
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(config, f)
+        return "<h1>Twitch Login Erfolgreich!</h1><p>Du kannst dieses Fenster jetzt schließen.</p>"
+    else:
+        return f"<h1>Fehler beim Login</h1><p>{res_data.get('message', 'Unbekannter Fehler')}</p>"
 
 @app.route('/settings', methods=['GET', 'POST'])
 def handle_settings():

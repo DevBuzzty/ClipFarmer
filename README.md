@@ -22,6 +22,13 @@ Ein KI-gestütztes Tool zur automatischen Erstellung von viralen Twitch-Clips (9
 3. **FFmpeg** (muss im System-Pfad sein)
 4. **Google Gemini API Key**: Erhältlich unter [ai.google.dev](https://ai.google.dev/).
 
+## Twitch API Setup (OAuth)
+Um Clips effizient zu erstellen oder die API zu nutzen:
+1. Gehen Sie auf die [Twitch Developer Console](https://dev.twitch.tv/console).
+2. Erstellen Sie eine neue App (Anwendung).
+3. Setzen Sie die **OAuth Redirect URL** auf: `http://localhost:5000/twitch/callback`
+4. Kopieren Sie die **Client ID** und das **Client Secret** in die Einstellungen der App.
+
 ### Lokale Entwicklung
 1. Repository klonen.
 2. Python-Abhängigkeiten installieren:
