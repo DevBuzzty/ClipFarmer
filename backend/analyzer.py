@@ -17,13 +17,15 @@ class Analyzer:
         2. A short description of why it's viral.
         3. A virality rating from 1 to 10.
         4. A catchy title for the clip.
+        5. A SEO-optimized description for YouTube/TikTok.
+        6. A list of 5 relevant hashtags.
 
         Transcript:
         {transcript_data['text']}
 
         Return the result strictly as a JSON list of objects:
         [
-            {{"start": 10.5, "end": 40.5, "description": "...", "rating": 9, "title": "..."}},
+            {{"start": 10.5, "end": 40.5, "description": "...", "rating": 9, "title": "...", "seo_description": "...", "hashtags": ["#tag1", ...]}},
             ...
         ]
         """

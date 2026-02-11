@@ -7,7 +7,7 @@ class Editor:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-    def process_clip(self, video_path, start_time, end_time, facecam_coords, gameplay_coords, output_filename):
+    def process_clip(self, video_path, start_time, end_time, facecam_coords, gameplay_coords, output_filename, use_gpu=False):
         video = VideoFileClip(video_path).subclip(start_time, end_time)
 
         # Target: 9:16 (e.g., 1080x1920)
@@ -74,6 +74,11 @@ class Editor:
         ], size=(target_w, target_h))
 
         output_path = os.path.join(self.output_dir, output_filename)
-        final_video.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=video.fps)
+        codec = "h264_nvenc" if use_gpu else "libx264"
+        try:
+            final_video.write_videofile(output_path, codec=codec, audio_codec="aac", fps=video.fps)
+        except:
+            # Fallback to cpu
+            final_video.write_videofile(output_path, codec="libx264", audio_codec="aac", fps=video.fps)
 
         return output_path

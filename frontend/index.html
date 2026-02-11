@@ -8,17 +8,78 @@
 </head>
 <body>
     <div class="container">
-        <h1>Twitch Viral Clip Automator</h1>
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="main-view">Clip-Generator</button>
+            <button class="tab-btn" data-tab="settings-view">Einstellungen</button>
+        </nav>
 
-        <div class="input-group">
-            <input type="text" id="vod-url" placeholder="Twitch VOD URL hier einfügen...">
-            <button id="analyze-btn">Analysieren</button>
+        <div id="main-view" class="tab-content active">
+            <h1>Twitch Viral Clip Automator</h1>
+
+            <div class="input-group">
+                <input type="text" id="vod-url" placeholder="Twitch VOD URL hier einfügen...">
+                <button id="analyze-btn">Analysieren</button>
+                <button id="export-all-btn" class="btn-secondary" style="display: none;">Alle Exportieren</button>
+            </div>
+
+            <div id="status">Bereit zum Starten...</div>
+            <div id="progress-container" style="display: none; background: #1a1d2e; height: 10px; border-radius: 5px; margin-bottom: 20px;">
+                <div id="progress-bar" style="background: #4f9cf9; width: 0%; height: 100%; border-radius: 5px; transition: width 0.3s;"></div>
+            </div>
+
+            <div id="clip-container" class="clip-list">
+                <!-- Clips werden hier dynamisch eingefügt -->
+            </div>
         </div>
 
-        <div id="status">Bereit zum Starten...</div>
+        <div id="settings-view" class="tab-content">
+            <h1>Einstellungen</h1>
+            <div class="settings-grid">
+                <div class="settings-section">
+                    <h3>KI & API Keys</h3>
+                    <div class="field">
+                        <label>Gemini API Key</label>
+                        <input type="password" id="set-gemini-key">
+                    </div>
+                    <div class="field">
+                        <label>Twitch Client ID</label>
+                        <input type="text" id="set-twitch-id">
+                    </div>
+                    <div class="field">
+                        <label>Twitch Client Secret</label>
+                        <input type="password" id="set-twitch-secret">
+                    </div>
+                </div>
 
-        <div id="clip-container" class="clip-list">
-            <!-- Clips werden hier dynamisch eingefügt -->
+                <div class="settings-section">
+                    <h3>Social Media Logins</h3>
+                    <div class="field">
+                        <label>YouTube (OAuth JSON Path)</label>
+                        <input type="text" id="set-youtube-json" placeholder="path/to/client_secret.json">
+                    </div>
+                    <div class="field">
+                        <label>TikTok Session ID</label>
+                        <input type="password" id="set-tiktok-session">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Performance</h3>
+                    <div class="field">
+                        <label>GPU Beschleunigung (NVENC)</label>
+                        <input type="checkbox" id="set-gpu">
+                    </div>
+                    <div class="field">
+                        <label>Whisper Modell</label>
+                        <select id="set-whisper-model">
+                            <option value="base">Base (Schnell)</option>
+                            <option value="medium">Medium (Genau)</option>
+                            <option value="large-v3">Large V3 (Beste)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <button id="save-settings-btn" style="margin-top: 20px; width: 100%;">Einstellungen Speichern</button>
         </div>
     </div>
 

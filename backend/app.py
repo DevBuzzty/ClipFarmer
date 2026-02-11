@@ -6,7 +6,9 @@ from downloader import Downloader
 from transcriber import Transcriber
 from analyzer import Analyzer
 from editor import Editor
+from social_uploader import SocialUploader
 from utils import extract_screenshot
+import json
 
 load_dotenv()
 
@@ -14,9 +16,24 @@ app = Flask(__name__)
 CORS(app)
 
 # Initialize modules
+CONFIG_FILE = 'config.json'
+
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, 'r') as f:
+            return json.load(f)
+    return {
+        "GEMINI_API_KEY": os.getenv('GEMINI_API_KEY', ''),
+        "WHISPER_MODEL": "base",
+        "USE_GPU": False
+    }
+
+config = load_config()
+
 downloader = Downloader()
-transcriber = Transcriber(model_size="base") # Use base for testing, user can change to medium/large
-analyzer = Analyzer(api_key=os.getenv('GEMINI_API_KEY'))
+uploader = SocialUploader(config)
+transcriber = Transcriber(model_size=config.get('WHISPER_MODEL', 'base'), device="cuda" if config.get('USE_GPU') else "cpu")
+analyzer = Analyzer(api_key=config.get('GEMINI_API_KEY'))
 editor = Editor()
 
 # Global state to keep track of current video info
@@ -25,6 +42,22 @@ current_video = {
     "facecam_coords": None,
     "gameplay_coords": None
 }
+
+@app.route('/settings', methods=['GET', 'POST'])
+def handle_settings():
+    global config, transcriber, analyzer, uploader
+    if request.method == 'GET':
+        return jsonify(load_config())
+    else:
+        new_config = request.json
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(new_config, f)
+        config = new_config
+        # Re-initialize modules with new settings
+        transcriber = Transcriber(model_size=config.get('WHISPER_MODEL', 'base'), device="cuda" if config.get('USE_GPU') else "cpu")
+        analyzer = Analyzer(api_key=config.get('GEMINI_API_KEY'))
+        uploader = SocialUploader(config)
+        return jsonify({"success": True})
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -60,6 +93,31 @@ def analyze():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/upload', methods=['POST'])
+def upload():
+    data = request.json
+    platform = data.get('platform')
+    video_path = data.get('video_path')
+    title = data.get('title', 'Twitch Clip')
+    description = data.get('description', '')
+    tags = data.get('tags', [])
+
+    if not video_path or not os.path.exists(video_path):
+        return jsonify({"error": "Video Datei nicht gefunden"}), 400
+
+    try:
+        if platform == 'youtube':
+            video_id = uploader.upload_to_youtube(video_path, title, description, tags)
+            return jsonify({"success": True, "video_id": video_id})
+        elif platform == 'tiktok':
+            # Placeholder call
+            res = uploader.upload_to_tiktok(video_path, description)
+            return jsonify({"success": True, "res": res})
+        else:
+            return jsonify({"error": "Unbekannte Plattform"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/export', methods=['POST'])
 def export():
     data = request.json
@@ -80,7 +138,8 @@ def export():
             clip_data['end'],
             facecam,
             gameplay,
-            output_filename
+            output_filename,
+            use_gpu=config.get('USE_GPU', False)
         )
 
         return jsonify({"success": True, "path": output_path})
