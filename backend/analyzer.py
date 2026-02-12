@@ -1,12 +1,12 @@
-import google.generativeai as genai
+from google import genai
 import os
 import json
 from PIL import Image
 
 class Analyzer:
     def __init__(self, api_key):
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-pro')
+        self.client = genai.Client(api_key=api_key)
+        self.model_name = 'gemini-1.5-pro'
 
     def find_viral_clips(self, transcript_data):
         # transcript_data is the dict from Transcriber
@@ -30,7 +30,10 @@ class Analyzer:
         ]
         """
 
-        response = self.model.generate_content(prompt)
+        response = self.client.models.generate_content(
+            model=self.model_name,
+            contents=prompt
+        )
         # Extract JSON from response
         try:
             # Gemini often wraps JSON in code blocks
@@ -63,7 +66,10 @@ class Analyzer:
         }
         """
 
-        response = self.model.generate_content([prompt, img])
+        response = self.client.models.generate_content(
+            model=self.model_name,
+            contents=[prompt, img]
+        )
 
         try:
             text = response.text
