@@ -65,22 +65,34 @@ Da das Projekt für GitHub Actions konfiguriert ist, wird bei jedem **Push auf d
 - Sobald der Workflow "Build and Release Windows App" abgeschlossen ist, finden Sie die fertige `.exe` unter **"Releases"** auf der rechten Seite der Repository-Startseite.
 
 ### 2. Lokal auf Ihrem PC
-Wenn Sie die `.exe` manuell auf Ihrem Windows-Rechner erstellen möchten:
+Dies ist der schnellste Weg, um eine fertige `.exe` auf Ihrem eigenen Rechner zu erstellen:
 
-1. **Backend kompilieren**:
+1. **Abhängigkeiten sicherstellen**:
+   Stellen Sie sicher, dass sowohl Python- als auch Node-Abhängigkeiten installiert sind:
    ```bash
-   pip install pyinstaller
-   pyinstaller --onefile --distpath frontend/backend_dist --collect-all faster_whisper --collect-all moviepy backend/app.py
+   pip install -r requirements.txt
+   npm install
    ```
-   Dies erstellt eine `app.exe` im Ordner `frontend/backend_dist`.
 
-2. **Frontend & App verpacken**:
+2. **Vollständiger Build**:
+   Führen Sie den kombinierten Build-Befehl aus:
    ```bash
-   npm run build
+   npm run dist
    ```
-   Die fertige App (als Portable `.exe` oder Installer) befindet sich danach im Ordner `dist/`.
+   Dieser Befehl kompiliert automatisch das Python-Backend (`app.exe`) und verpackt anschließend die gesamte Electron-App. Die fertige Datei finden Sie danach im Ordner `dist/`.
 
-> **Hinweis**: Für den lokalen Build müssen alle Abhängigkeiten aus `requirements.txt` und `package.json` installiert sein.
+## Fehlerbehebung (Troubleshooting)
+
+### "Failed to fetch" oder "Backend nicht erreichbar"
+Dies bedeutet, dass das Python-Backend nicht läuft.
+- **In der Entwicklung (`npm start`)**: Prüfen Sie die Konsole auf Fehlermeldungen. Stellen Sie sicher, dass keine andere App Port 5000 belegt.
+- **In der `.exe`**: Stellen Sie sicher, dass Sie `npm run dist` (oder `npm run build-backend`) ausgeführt haben, bevor Sie die App verpackt haben. Die `app.exe` muss im Ordner `resources/backend/` innerhalb des Installationsverzeichnisses existieren.
+
+### "ENOENT" Fehler beim Start
+Die App findet die `app.exe` nicht.
+- Löschen Sie die Ordner `dist` und `frontend/backend_dist`.
+- Führen Sie `npm run dist` erneut aus.
+- Stellen Sie sicher, dass Ihr Antivirus-Programm die `app.exe` nicht blockiert oder gelöscht hat.
 
 ## API-Limits & Hardware
 - **Gemini 1.5 Pro**: Das Modell hat ein sehr großes Kontext-Fenster, was die Analyse kompletter Streams ermöglicht. Achten Sie auf Ihre API-Quota im Google AI Studio.

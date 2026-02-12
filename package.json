@@ -5,7 +5,9 @@
   "main": "frontend/main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "build-backend": "pyinstaller --onefile --name app --distpath frontend/backend_dist --collect-all faster_whisper --collect-all moviepy backend/app.py",
+    "dist": "npm run build-backend && npm run build"
   },
   "build": {
     "appId": "com.twitch.viral.clip.automator",
