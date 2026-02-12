@@ -116,7 +116,7 @@ def get_status(task_id):
 @app.route('/twitch/login', methods=['GET'])
 def twitch_login():
     client_id = config.get('TWITCH_CLIENT_ID')
-    redirect_uri = f"http://localhost:{os.getenv('PORT', 5000)}/twitch/callback"
+    redirect_uri = f"http://localhost:{os.getenv('PORT', 5001)}/twitch/callback"
     scope = "clips:edit"
     url = f"https://id.twitch.tv/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope={scope}"
     return jsonify({"url": url})
@@ -148,7 +148,7 @@ def twitch_callback():
     code = request.args.get('code')
     client_id = config.get('TWITCH_CLIENT_ID')
     client_secret = config.get('TWITCH_CLIENT_SECRET')
-    redirect_uri = f"http://localhost:{os.getenv('PORT', 5000)}/twitch/callback"
+    redirect_uri = f"http://localhost:{os.getenv('PORT', 5001)}/twitch/callback"
 
     token_url = "https://id.twitch.tv/oauth2/token"
     payload = {

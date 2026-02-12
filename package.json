@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
-    "build-backend": "pyinstaller --onefile --name app --distpath frontend/backend_dist --collect-all faster_whisper --collect-all moviepy --hidden-import google.genai backend/app.py",
+    "build-backend": "pyinstaller --noconfirm --onefile --name app --distpath frontend/backend_dist --collect-all faster_whisper --collect-all moviepy --collect-all flask --collect-all flask_cors --collect-all google.genai --collect-all requests --hidden-import flask --hidden-import flask_cors --hidden-import requests backend/app.py",
     "dist": "npm run build-backend && npm run build"
   },
   "build": {

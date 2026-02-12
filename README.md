@@ -29,7 +29,7 @@ Ein KI-gestütztes Tool zur automatischen Erstellung von viralen Twitch-Clips (9
 Um Clips effizient zu erstellen oder die API zu nutzen:
 1. Gehen Sie auf die [Twitch Developer Console](https://dev.twitch.tv/console).
 2. Erstellen Sie eine neue App (Anwendung).
-3. Setzen Sie die **OAuth Redirect URL** auf: `http://localhost:5000/twitch/callback`
+3. Setzen Sie die **OAuth Redirect URL** auf: `http://localhost:5001/twitch/callback`
 4. Kopieren Sie die **Client ID** und das **Client Secret** in die Einstellungen der App.
 
 ### Lokale Entwicklung
@@ -88,7 +88,7 @@ Dies ist der schnellste Weg, um eine fertige `.exe` auf Ihrem eigenen Rechner zu
 
 ### "Failed to fetch" oder "Backend nicht erreichbar"
 Dies bedeutet, dass das Python-Backend nicht läuft.
-- **In der Entwicklung (`npm start`)**: Prüfen Sie die Konsole auf Fehlermeldungen. Stellen Sie sicher, dass keine andere App Port 5000 belegt.
+- **In der Entwicklung (`npm start`)**: Prüfen Sie die Konsole auf Fehlermeldungen. Stellen Sie sicher, dass keine andere App Port 5001 belegt.
 - **In der `.exe`**: Stellen Sie sicher, dass Sie `npm run dist` (oder `npm run build-backend`) ausgeführt haben, bevor Sie die App verpackt haben. Die `app.exe` muss im Ordner `resources/backend/` innerhalb des Installationsverzeichnisses existieren.
 
 ### "ENOENT" Fehler beim Start
