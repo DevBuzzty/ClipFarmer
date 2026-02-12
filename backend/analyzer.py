@@ -9,7 +9,6 @@ class Analyzer:
         self.model_name = 'gemini-1.5-pro'
 
     def find_viral_clips(self, transcript_data, hype_segments=None):
-        # transcript_data is the dict from Transcriber
         hype_info = ""
         if hype_segments:
             hype_info = f"\nZusätzliche Info: Die folgenden Zeitbereiche hatten hohe Audio-Energie (Lachen, Schreien, Hype): {hype_segments}\n"
@@ -42,9 +41,8 @@ class Analyzer:
             model=self.model_name,
             contents=prompt
         )
-        # Extract JSON from response
+
         try:
-            # Gemini often wraps JSON in code blocks
             text = response.text
             if "```json" in text:
                 text = text.split("```json")[1].split("```")[0]
@@ -58,14 +56,14 @@ class Analyzer:
             return []
 
     def detect_facecam(self, screenshot_path):
-        # Load image
         img = Image.open(screenshot_path)
 
         prompt = """
-        Look at this screenshot from a Twitch stream.
-        Identify the bounding box of the facecam (the area showing the streamer's face).
-        Identify the bounding box of the main gameplay area.
-        Return the coordinates as a JSON object with 'facecam' and 'gameplay' keys, each containing [ymin, xmin, ymax, xmax] in normalized coordinates (0-1000).
+        Analysiere diesen Screenshot eines Twitch-Streams.
+        Identifiziere das Bounding-Box des Facecam-Bereichs (wo der Streamer zu sehen ist).
+        Identifiziere das Bounding-Box des Gameplay-Bereichs.
+        Gib die Koordinaten als JSON-Objekt zurück mit 'facecam' und 'gameplay' Keys.
+        Jeder Key enthält [ymin, xmin, ymax, xmax] in normalisierten Koordinaten (0-1000).
 
         Format:
         {
@@ -90,6 +88,4 @@ class Analyzer:
             return coords
         except Exception as e:
             print(f"Error parsing Gemini facecam response: {e}")
-            # Default fallback: assume facecam is top left or right?
-            # Better to return None and handle it.
             return None

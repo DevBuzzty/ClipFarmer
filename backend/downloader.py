@@ -7,27 +7,27 @@ class Downloader:
         if not os.path.exists(download_dir):
             os.makedirs(download_dir)
 
-    def download_video(self, url, progress_hooks=None):
+    def download_video(self, url):
         ydl_opts = {
-            'format': 'bestvideo+bestaudio/best',
-            'outtmpl': os.path.join(self.download_dir, '%(title)s.%(ext)s'),
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            'outtmpl': os.path.join(self.download_dir, '%(id)s.%(ext)s'),
             'merge_output_format': 'mp4',
-            'progress_hooks': progress_hooks or [],
+            'quiet': True,
+            'no_warnings': True,
         }
-
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             return ydl.prepare_filename(info)
 
     def extract_audio(self, video_path):
-        audio_path = os.path.splitext(video_path)[0] + '.wav'
-        # We can use moviepy or ffmpeg directly. Since moviepy is a dependency, let's use it or just yt-dlp to extract audio.
-        # Actually, let's use ffmpeg via command line for speed if available, or moviepy.
+        audio_path = video_path.replace('.mp4', '.mp3')
+        if os.path.exists(audio_path):
+            return audio_path
+
         import subprocess
         command = [
             'ffmpeg', '-i', video_path,
-            '-vn', '-acodec', 'pcm_s16le', '-ar', '16000', '-ac', '1',
-            audio_path, '-y'
+            '-vn', '-acodec', 'libmp3lame', '-y', audio_path
         ]
-        subprocess.run(command, check=True)
+        subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return audio_path

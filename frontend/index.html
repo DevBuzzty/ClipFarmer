@@ -1,104 +1,102 @@
 <!DOCTYPE html>
-<html lang="de">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twitch Viral Clip Automator</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <nav class="tabs">
-            <button class="tab-btn active" data-tab="main-view">Clip-Generator</button>
-            <button class="tab-btn" data-tab="settings-view">Einstellungen</button>
-            <div id="server-status-container" style="display: flex; align-items: center;">
-                <div id="server-status" class="status-dot offline" title="Server Status"></div>
-                <button id="restart-backend-btn" class="btn-secondary" style="padding: 2px 8px; font-size: 0.7em; margin-left: 10px; display: none;">Neustart</button>
+    <div id="app-container">
+        <header>
+            <div class="logo">ViraFlow <span style="font-size: 10px; opacity: 0.5;">v2.0</span></div>
+            <nav>
+                <button class="nav-btn active" data-view="analyze-view">Analyse</button>
+                <button class="nav-btn" data-view="settings-view">Einstellungen</button>
+            </nav>
+            <div id="server-status-pill">
+                <span id="status-dot" class="status-dot status-offline"></span>
+                <span id="status-text">Server Offline</span>
+                <button id="restart-btn" class="secondary-btn" style="margin-left: 10px; padding: 4px 8px; font-size: 10px; display: none;">Fix</button>
             </div>
-        </nav>
+        </header>
 
-        <div id="main-view" class="tab-content active">
-            <h1>Twitch Viral Clip Automator</h1>
-
-            <div class="input-group">
-                <input type="text" id="vod-url" placeholder="Twitch VOD URL hier einfügen...">
-                <button id="analyze-btn">Analysieren</button>
-                <button id="export-all-btn" class="btn-secondary" style="display: none;">Alle Exportieren</button>
-            </div>
-
-            <div id="status">Bereit zum Starten...</div>
-            <div id="progress-container" style="display: none; background: #1a1d2e; height: 10px; border-radius: 5px; margin-bottom: 20px;">
-                <div id="progress-bar" style="background: #4f9cf9; width: 0%; height: 100%; border-radius: 5px; transition: width 0.3s;"></div>
-            </div>
-
-            <div id="clip-container" class="clip-list">
-                <!-- Clips werden hier dynamisch eingefügt -->
-            </div>
-        </div>
-
-        <div id="settings-view" class="tab-content">
-            <h1>Einstellungen</h1>
-            <div class="settings-grid">
-                <div class="settings-section">
-                    <h3>KI & API Keys</h3>
-                    <div class="field">
-                        <label>Gemini API Key</label>
-                        <input type="password" id="set-gemini-key">
+        <main>
+            <!-- ANALYZE VIEW -->
+            <div id="analyze-view" class="view active">
+                <div class="card">
+                    <h2 style="margin-top: 0;">Stream VOD Verarbeiten</h2>
+                    <p style="color: var(--text-dim);">Füge den Twitch-Link ein, um Highlights automatisch zu identifizieren.</p>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="vod-url" placeholder="https://www.twitch.tv/videos/...">
+                        <button id="analyze-btn" class="primary-btn">Starten</button>
                     </div>
-                    <div class="field">
-                        <label>Twitch Client ID</label>
-                        <input type="text" id="set-twitch-id">
-                    </div>
-                    <div class="field">
-                        <label>Twitch Client Secret</label>
-                        <input type="password" id="set-twitch-secret">
-                    </div>
-                    <button id="twitch-login-btn" class="btn-secondary" style="width: 100%;">Twitch Login (für Clips)</button>
-                </div>
 
-                <div class="settings-section">
-                    <h3>Social Media Logins</h3>
-                    <div class="field">
-                        <label>YouTube (OAuth JSON Path)</label>
-                        <input type="text" id="set-youtube-json" placeholder="path/to/client_secret.json">
-                    </div>
-                    <div class="field">
-                        <label>TikTok Session ID</label>
-                        <input type="password" id="set-tiktok-session">
+                    <div id="progress-container" class="progress-container">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px;">
+                            <span id="progress-status">Bereit...</span>
+                            <span id="progress-percent">0%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div id="progress-bar-fill" class="progress-bar-fill"></div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="settings-section">
-                    <h3>Performance</h3>
-                    <div class="field">
-                        <label>GPU Beschleunigung (NVENC)</label>
-                        <input type="checkbox" id="set-gpu">
+                <div id="results-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px;">
+                        <h3>Identifizierte Clips</h3>
+                        <button id="export-all-btn" class="secondary-btn" style="display: none;">Batch Export</button>
                     </div>
-                    <div class="field">
-                        <label>Whisper Modell</label>
-                        <select id="set-whisper-model">
-                            <option value="base">Base (Schnell)</option>
-                            <option value="medium">Medium (Genau)</option>
-                            <option value="large-v3">Large V3 (Beste)</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label>Clip Layout</label>
-                        <select id="set-layout">
-                            <option value="stack">Stack (Facecam oben)</option>
-                            <option value="overlay">Overlay (Facecam klein)</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label>Automatische Untertitel</label>
-                        <input type="checkbox" id="set-captions" checked>
+                    <div id="clip-grid" class="grid">
+                        <!-- Clips will be injected here -->
                     </div>
                 </div>
             </div>
-            <button id="save-settings-btn" style="margin-top: 20px; width: 100%;">Einstellungen Speichern</button>
-        </div>
+
+            <!-- SETTINGS VIEW -->
+            <div id="settings-view" class="view">
+                <div class="card">
+                    <h2 style="margin-top: 0;">Konfiguration</h2>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                        <div>
+                            <h4>KI & API</h4>
+                            <label style="font-size: 12px; color: var(--text-dim);">Gemini API Key</label>
+                            <input type="password" id="set-gemini-key">
+
+                            <label style="font-size: 12px; color: var(--text-dim); margin-top: 15px; display: block;">Whisper Modell</label>
+                            <select id="set-whisper-model">
+                                <option value="base">Base (Schnell)</option>
+                                <option value="medium">Medium (Genau)</option>
+                                <option value="large-v3">Large V3 (Beste Qualität)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <h4>Video & Layout</h4>
+                            <label style="font-size: 12px; color: var(--text-dim);">Export Layout</label>
+                            <select id="set-layout">
+                                <option value="stack">Stack (Facecam oben)</option>
+                                <option value="overlay">Overlay (Facecam klein)</option>
+                            </select>
+
+                            <div style="margin-top: 20px; display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="set-gpu" style="width: auto; margin: 0;">
+                                <label style="font-size: 14px;">GPU Beschleunigung (NVENC)</label>
+                            </div>
+
+                            <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="set-captions" checked style="width: auto; margin: 0;">
+                                <label style="font-size: 14px;">Automatische Untertitel</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="save-settings-btn" class="primary-btn" style="width: 100%; margin-top: 40px;">Einstellungen Speichern</button>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <script src="renderer.js"></script>
+    <script src="js/renderer.js"></script>
 </body>
 </html>

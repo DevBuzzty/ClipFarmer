@@ -11,32 +11,32 @@ def extract_screenshot(video_path, timestamp_sec, output_path):
     cap.release()
     return success
 
+def detect_face_in_area(image, coords):
+    h, w, _ = image.shape
+    fy1, fx1, fy2, fx2 = [int(c * h / 1000) if i % 2 == 0 else int(c * w / 1000) for i, c in enumerate(coords)]
+    area = image[fy1:fy2, fx1:fx2]
+    if area.size == 0: return None
+
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    gray = cv2.cvtColor(area, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+    return faces[0] if len(faces) > 0 else None
+
 def refine_facecam_crop(screenshot_path, initial_coords):
-    """
-    Versucht das Gesicht im angegebenen Ausschnitt zu finden und den Crop zu zentrieren.
-    initial_coords: [ymin, xmin, ymax, xmax] (0-1000)
-    """
     img = cv2.imread(screenshot_path)
     if img is None: return initial_coords
 
-    h, w, _ = img.size if hasattr(img, 'size') else (img.shape[0], img.shape[1], 3)
+    h, w, _ = img.shape
 
-    # Ausschnitt extrahieren
     fy1, fx1, fy2, fx2 = [int(c * h / 1000) if i % 2 == 0 else int(c * w / 1000) for i, c in enumerate(initial_coords)]
     facecam_img = img[fy1:fy2, fx1:fx2]
 
-    # Gesichtserkennung
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     gray = cv2.cvtColor(facecam_img, cv2.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(gray, 1.1, 4)
 
     if len(faces) > 0:
-        # Nimm das größte Gesicht
         (x, y, fw, fh) = max(faces, key=lambda f: f[2] * f[3])
-
-        # Berechne Verschiebung um das Gesicht im initialen Ausschnitt zu zentrieren
-        # Wir wollen den Ausschnitt [fy1, fx1, fy2, fx2] so verschieben, dass das Gesicht mittig ist
-        # Aber wir bleiben innerhalb der Grenzen des Originalbildes.
 
         face_center_x_abs = fx1 + x + fw / 2
         face_center_y_abs = fy1 + y + fh / 2

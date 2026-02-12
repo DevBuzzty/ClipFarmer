@@ -22,11 +22,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pyinstaller
 
       - name: Build Python Backend
         run: |
-          pip install pyinstaller
-          # Build using the spec file for more robust dependency collection
+          # The spec file handles all dependencies
           pyinstaller --noconfirm --distpath frontend/backend_dist backend.spec
 
       - name: Set up Node.js
@@ -46,8 +46,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: dist/*.exe
-          tag_name: latest
-          name: Latest Release
-          body: "Automatisch erstellter Build vom main Branch."
+          tag_name: v2.0.${{ github.run_number }}
+          name: ViraFlow v2.0 Release
+          body: "Premium AI Twitch Automator - Deep Dark Space Edition."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
