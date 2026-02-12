@@ -26,8 +26,8 @@ jobs:
       - name: Build Python Backend
         run: |
           pip install pyinstaller
-          # Use --name app to ensure the executable is named app.exe
-          pyinstaller --noconfirm --onefile --name app --distpath frontend/backend_dist --collect-all faster_whisper --collect-all moviepy --collect-all flask --collect-all flask_cors --collect-all google.genai --collect-all requests --hidden-import flask --hidden-import flask_cors --hidden-import requests backend/app.py
+          # Build using the spec file for more robust dependency collection
+          pyinstaller --noconfirm --distpath frontend/backend_dist backend.spec
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
