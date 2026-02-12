@@ -36,11 +36,55 @@ def load_config():
 
 config = load_config()
 
-downloader = Downloader()
-uploader = SocialUploader(config)
-transcriber = Transcriber(model_size=config.get('WHISPER_MODEL', 'base'), device="cuda" if config.get('USE_GPU') else "cpu")
-analyzer = Analyzer(api_key=config.get('GEMINI_API_KEY'))
-editor = Editor()
+# Global module instances (lazy loaded)
+_downloader = None
+_transcriber = None
+_analyzer = None
+_editor = None
+_uploader = None
+
+def get_downloader():
+    global _downloader
+    if _downloader is None:
+        _downloader = Downloader()
+    return _downloader
+
+def get_transcriber():
+    global _transcriber
+    if _transcriber is None:
+        device = "cuda" if config.get('USE_GPU') else "cpu"
+        model_size = config.get('WHISPER_MODEL', 'base')
+        try:
+            _transcriber = Transcriber(model_size=model_size, device=device)
+        except Exception as e:
+            print(f"Error initializing Transcriber (Whisper): {e}")
+            # Fallback to CPU if CUDA fails
+            if device == "cuda":
+                _transcriber = Transcriber(model_size=model_size, device="cpu")
+            else:
+                raise e
+    return _transcriber
+
+def get_analyzer():
+    global _analyzer
+    if _analyzer is None:
+        api_key = config.get('GEMINI_API_KEY')
+        if not api_key:
+            raise Exception("Gemini API Key fehlt in den Einstellungen!")
+        _analyzer = Analyzer(api_key=api_key)
+    return _analyzer
+
+def get_editor():
+    global _editor
+    if _editor is None:
+        _editor = Editor()
+    return _editor
+
+def get_uploader():
+    global _uploader
+    if _uploader is None:
+        _uploader = SocialUploader(config)
+    return _uploader
 
 # Global state
 current_video = {
@@ -50,6 +94,10 @@ current_video = {
 }
 
 task_manager = TaskManager()
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "healthy"})
 
 @app.route('/status/<task_id>', methods=['GET'])
 def get_status(task_id):
@@ -117,7 +165,7 @@ def twitch_callback():
 
 @app.route('/settings', methods=['GET', 'POST'])
 def handle_settings():
-    global config, transcriber, analyzer, uploader
+    global config, _transcriber, _analyzer, _uploader
     if request.method == 'GET':
         return jsonify(load_config())
     else:
@@ -125,10 +173,10 @@ def handle_settings():
         with open(CONFIG_FILE, 'w') as f:
             json.dump(new_config, f)
         config = new_config
-        # Re-initialize modules with new settings
-        transcriber = Transcriber(model_size=config.get('WHISPER_MODEL', 'base'), device="cuda" if config.get('USE_GPU') else "cpu")
-        analyzer = Analyzer(api_key=config.get('GEMINI_API_KEY'))
-        uploader = SocialUploader(config)
+        # Reset modules so they re-initialize with new settings
+        _transcriber = None
+        _analyzer = None
+        _uploader = None
         return jsonify({"success": True})
 
 @app.route('/analyze', methods=['POST'])
@@ -144,22 +192,22 @@ def analyze():
     def run_analyze():
         try:
             task_manager.update_task(task_id, "downloading", progress=10)
-            video_path = downloader.download_video(url)
+            video_path = get_downloader().download_video(url)
             current_video["path"] = video_path
 
             task_manager.update_task(task_id, "transcribing", progress=40)
-            audio_path = downloader.extract_audio(video_path)
-            transcript = transcriber.transcribe(audio_path)
+            audio_path = get_downloader().extract_audio(video_path)
+            transcript = get_transcriber().transcribe(audio_path)
 
             task_manager.update_task(task_id, "analyzing", progress=70)
-            clips = analyzer.find_viral_clips(transcript)
+            clips = get_analyzer().find_viral_clips(transcript)
 
             task_manager.update_task(task_id, "detecting_facecam", progress=90)
             sample_times = [300, 600, 1200]
             for t in sample_times:
                 screenshot_path = f"screenshot_{t}.jpg"
                 if extract_screenshot(video_path, t, screenshot_path):
-                    coords = analyzer.detect_facecam(screenshot_path)
+                    coords = get_analyzer().detect_facecam(screenshot_path)
                     if coords and coords.get('facecam'):
                         current_video["facecam_coords"] = coords.get('facecam')
                         current_video["gameplay_coords"] = coords.get('gameplay')
@@ -197,10 +245,10 @@ def upload():
     def run_upload():
         try:
             if platform == 'youtube':
-                video_id = uploader.upload_to_youtube(video_path, title, description, tags)
+                video_id = get_uploader().upload_to_youtube(video_path, title, description, tags)
                 task_manager.update_task(task_id, "completed", progress=100, result={"video_id": video_id})
             elif platform == 'tiktok':
-                res = uploader.upload_to_tiktok(video_path, description)
+                res = get_uploader().upload_to_tiktok(video_path, description)
                 task_manager.update_task(task_id, "completed", progress=100, result={"res": res})
             else:
                 task_manager.update_task(task_id, "failed", error="Unbekannte Plattform")
@@ -226,7 +274,7 @@ def export():
             facecam = current_video["facecam_coords"] or [0, 0, 300, 300]
             gameplay = current_video["gameplay_coords"] or [0, 0, 1000, 1000]
 
-            output_path = editor.process_clip(
+            output_path = get_editor().process_clip(
                 current_video["path"],
                 clip_data['start'],
                 clip_data['end'],

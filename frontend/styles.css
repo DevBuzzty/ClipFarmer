@@ -169,6 +169,25 @@ button:hover {
     display: block;
 }
 
+/* Status Dot */
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    align-self: center;
+    margin-left: 10px;
+}
+
+.status-dot.online {
+    background-color: #44ff44;
+    box-shadow: 0 0 10px #44ff44;
+}
+
+.status-dot.offline {
+    background-color: #ff4444;
+    box-shadow: 0 0 10px #ff4444;
+}
+
 /* Settings */
 .settings-grid {
     display: grid;

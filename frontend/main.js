@@ -73,17 +73,31 @@ function startPythonBackend() {
   }
 
   if (pythonProcess) {
+    const logPath = path.join(app.getPath('userData'), 'backend.log');
+    const logStream = fs.createWriteStream(logPath, { flags: 'a' });
+
     pythonProcess.on('error', (err) => {
       console.error('Failed to start backend process:', err);
-      dialog.showErrorBox('Backend Fehler', `Konnte Backend-Prozess nicht starten: ${err.message}`);
+      logStream.write(`ERROR: Failed to start backend process: ${err.message}\n`);
+      dialog.showErrorBox('Backend Fehler', `Konnte Backend-Prozess nicht starten: ${err.message}\nLogs: ${logPath}`);
+    });
+
+    pythonProcess.on('exit', (code, signal) => {
+      console.log(`Backend process exited with code ${code} and signal ${signal}`);
+      logStream.write(`EXIT: Backend process exited with code ${code} and signal ${signal}\n`);
+      if (code !== 0 && code !== null) {
+        dialog.showErrorBox('Backend Fehler', `Backend-Prozess wurde unerwartet beendet (Code: ${code}).\nLogs: ${logPath}`);
+      }
     });
 
     pythonProcess.stdout.on('data', (data) => {
       console.log(`Python: ${data}`);
+      logStream.write(`STDOUT: ${data}\n`);
     });
 
     pythonProcess.stderr.on('data', (data) => {
       console.error(`Python Error: ${data}`);
+      logStream.write(`STDERR: ${data}\n`);
     });
   }
 }

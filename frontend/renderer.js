@@ -7,8 +7,30 @@ const twitchLoginBtn = document.getElementById('twitch-login-btn');
 const exportAllBtn = document.getElementById('export-all-btn');
 const progressBar = document.getElementById('progress-bar');
 const progressContainer = document.getElementById('progress-container');
+const serverStatusDot = document.getElementById('server-status');
 
 const BACKEND_URL = 'http://localhost:5000';
+
+async function checkServerStatus() {
+    try {
+        const response = await window.api.fetch(`${BACKEND_URL}/health`);
+        if (response && response.status === 'healthy') {
+            serverStatusDot.classList.remove('offline');
+            serverStatusDot.classList.add('online');
+            serverStatusDot.title = 'Server Online';
+        } else {
+            throw new Error();
+        }
+    } catch (e) {
+        serverStatusDot.classList.remove('online');
+        serverStatusDot.classList.add('offline');
+        serverStatusDot.title = 'Server Offline';
+    }
+}
+
+// Check status every 5 seconds
+setInterval(checkServerStatus, 5000);
+checkServerStatus();
 
 async function pollTask(taskId, onProgress) {
     return new Promise((resolve, reject) => {
