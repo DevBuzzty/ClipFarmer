@@ -31,6 +31,7 @@ function startPythonBackend() {
   const isDev = !app.isPackaged;
   let backendPath;
   let args = [];
+  const port = "5001";
 
   if (isDev) {
     const pythonPath = process.env.PYTHON_PATH || 'python';
@@ -42,7 +43,9 @@ function startPythonBackend() {
       return;
     }
 
-    pythonProcess = spawn(pythonPath, args);
+    pythonProcess = spawn(pythonPath, args, {
+      env: { ...process.env, PORT: port }
+    });
   } else {
     // Try multiple possible locations for production
     const possiblePaths = [
@@ -63,7 +66,8 @@ function startPythonBackend() {
     try {
       pythonProcess = spawn(backendPath, [], {
         windowsHide: true,
-        shell: false
+        shell: false,
+        env: { ...process.env, PORT: port }
       });
     } catch (err) {
       console.error('Failed to spawn backend process:', err);
@@ -101,6 +105,13 @@ function startPythonBackend() {
     });
   }
 }
+
+ipcMain.on('restart-backend', () => {
+  if (pythonProcess) {
+    pythonProcess.kill();
+  }
+  startPythonBackend();
+});
 
 app.whenReady().then(() => {
   startPythonBackend();

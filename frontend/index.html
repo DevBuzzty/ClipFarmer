@@ -11,7 +11,10 @@
         <nav class="tabs">
             <button class="tab-btn active" data-tab="main-view">Clip-Generator</button>
             <button class="tab-btn" data-tab="settings-view">Einstellungen</button>
-            <div id="server-status" class="status-dot offline" title="Server Status"></div>
+            <div id="server-status-container" style="display: flex; align-items: center;">
+                <div id="server-status" class="status-dot offline" title="Server Status"></div>
+                <button id="restart-backend-btn" class="btn-secondary" style="padding: 2px 8px; font-size: 0.7em; margin-left: 10px; display: none;">Neustart</button>
+            </div>
         </nav>
 
         <div id="main-view" class="tab-content active">

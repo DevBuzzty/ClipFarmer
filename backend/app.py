@@ -152,8 +152,11 @@ def twitch_callback():
         "redirect_uri": redirect_uri
     }
 
-    response = requests.post(token_url, data=payload)
-    res_data = response.json()
+    try:
+        response = requests.post(token_url, data=payload, timeout=10)
+        res_data = response.json()
+    except Exception as e:
+        return f"<h1>Fehler beim Login</h1><p>Timeout oder Verbindungsfehler zur Twitch API: {str(e)}</p>"
 
     if "access_token" in res_data:
         config["TWITCH_ACCESS_TOKEN"] = res_data["access_token"]
@@ -291,5 +294,6 @@ def export():
     return jsonify({"task_id": task_id})
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    # Use 127.0.0.1 for better reliability on Windows
+    port = int(os.getenv('PORT', 5001))
+    app.run(host='127.0.0.1', port=port)

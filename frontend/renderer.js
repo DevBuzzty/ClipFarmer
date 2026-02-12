@@ -8,8 +8,9 @@ const exportAllBtn = document.getElementById('export-all-btn');
 const progressBar = document.getElementById('progress-bar');
 const progressContainer = document.getElementById('progress-container');
 const serverStatusDot = document.getElementById('server-status');
+const restartBackendBtn = document.getElementById('restart-backend-btn');
 
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = 'http://127.0.0.1:5001';
 
 async function checkServerStatus() {
     try {
@@ -18,6 +19,7 @@ async function checkServerStatus() {
             serverStatusDot.classList.remove('offline');
             serverStatusDot.classList.add('online');
             serverStatusDot.title = 'Server Online';
+            restartBackendBtn.style.display = 'none';
         } else {
             throw new Error();
         }
@@ -25,8 +27,20 @@ async function checkServerStatus() {
         serverStatusDot.classList.remove('online');
         serverStatusDot.classList.add('offline');
         serverStatusDot.title = 'Server Offline';
+        restartBackendBtn.style.display = 'inline-block';
     }
 }
+
+restartBackendBtn.addEventListener('click', () => {
+    restartBackendBtn.disabled = true;
+    restartBackendBtn.textContent = 'Lädt...';
+    window.api.restartBackend();
+    setTimeout(() => {
+        restartBackendBtn.disabled = false;
+        restartBackendBtn.textContent = 'Neustart';
+        checkServerStatus();
+    }, 3000);
+});
 
 // Check status every 5 seconds
 setInterval(checkServerStatus, 5000);
@@ -131,10 +145,10 @@ saveSettingsBtn.addEventListener('click', async () => {
         if (response && response.success) {
             alert('Einstellungen erfolgreich gespeichert!');
         } else {
-            alert('Backend nicht erreichbar. Bitte App neu starten.');
+            alert(`Backend nicht erreichbar (${BACKEND_URL}). Bitte App neu starten.`);
         }
     } catch (e) {
-        alert('Verbindungsfehler zum Backend: ' + e.message + '\nStellen Sie sicher, dass das Programm nicht von einer Firewall blockiert wird.');
+        alert(`Verbindungsfehler zum Backend (${BACKEND_URL}): ` + e.message + '\nStellen Sie sicher, dass das Programm nicht von einer Firewall blockiert wird.');
     }
 });
 
@@ -179,7 +193,7 @@ analyzeBtn.addEventListener('click', async () => {
 
         setTimeout(() => progressContainer.style.display = 'none', 3000);
     } catch (err) {
-        updateUIProgress(`Fehler: ${err.message}`, 0);
+        updateUIProgress(`Fehler (${BACKEND_URL}): ${err.message}`, 0);
         analyzeBtn.disabled = false;
     }
 });

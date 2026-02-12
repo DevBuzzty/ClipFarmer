@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.on(channel, (event, ...args) => func(...args));
     }
   },
+  restartBackend: () => ipcRenderer.send('restart-backend'),
   // We can also expose fetch or axios for backend communication
   fetch: (url, options) => fetch(url, options).then(res => res.json())
 });
