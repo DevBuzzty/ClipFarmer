@@ -8,26 +8,34 @@ class Analyzer:
         self.client = genai.Client(api_key=api_key)
         self.model_name = 'gemini-1.5-pro'
 
-    def find_viral_clips(self, transcript_data):
+    def find_viral_clips(self, transcript_data, hype_segments=None):
         # transcript_data is the dict from Transcriber
-        prompt = f"""
-        Analyze the following transcript from a Twitch stream and identify the most viral, funny, or high-energy moments.
-        For each moment, provide:
-        1. Start and end timestamps (in seconds). Clips should be between 15 and 60 seconds.
-        2. A short description of why it's viral.
-        3. A virality rating from 1 to 10.
-        4. A catchy title for the clip.
-        5. A SEO-optimized description for YouTube/TikTok.
-        6. A list of 5 relevant hashtags.
+        hype_info = ""
+        if hype_segments:
+            hype_info = f"\nZusätzliche Info: Die folgenden Zeitbereiche hatten hohe Audio-Energie (Lachen, Schreien, Hype): {hype_segments}\n"
 
-        Transcript:
+        prompt = f"""
+        Analysiere das folgende Transkript eines Twitch-Streams und identifiziere die viralsten, lustigsten oder energiegeladensten Momente.
+        {hype_info}
+        Für jeden Moment gib an:
+        1. Start- und End-Timestamps (in Sekunden). Clips sollten zwischen 15 und 60 Sekunden lang sein.
+        2. Eine kurze Beschreibung, warum es viral ist.
+        3. Ein Virality-Rating von 1 bis 10.
+        4. Einen packenden Titel für den Clip.
+        5. Eine SEO-optimierte Beschreibung für YouTube/TikTok.
+        6. Eine Liste von 5 relevanten Hashtags.
+
+        Transkript:
         {transcript_data['text']}
 
-        Return the result strictly as a JSON list of objects:
+        Gib das Ergebnis strikt als JSON-Liste von Objekten zurück:
         [
             {{"start": 10.5, "end": 40.5, "description": "...", "rating": 9, "title": "...", "seo_description": "...", "hashtags": ["#tag1", ...]}},
             ...
         ]
+        Anforderungen:
+        - Nutze die Audio-Hype-Daten, um den Höhepunkt des Moments exakt zu erfassen.
+        - Achte darauf, dass der Kontext (Vorbereitung eines Witzes) mit im Clip ist.
         """
 
         response = self.client.models.generate_content(

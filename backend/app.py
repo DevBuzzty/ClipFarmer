@@ -6,8 +6,9 @@ from downloader import Downloader
 from transcriber import Transcriber
 from analyzer import Analyzer
 from editor import Editor
+from audio_analyzer import AudioAnalyzer
 from social_uploader import SocialUploader
-from utils import extract_screenshot
+from utils import extract_screenshot, refine_facecam_crop
 from task_manager import TaskManager
 import json
 import threading
@@ -31,7 +32,9 @@ def load_config():
     return {
         "GEMINI_API_KEY": os.getenv('GEMINI_API_KEY', ''),
         "WHISPER_MODEL": "base",
-        "USE_GPU": False
+        "USE_GPU": False,
+        "LAYOUT": "stack",
+        "CAPTIONS": True
     }
 
 config = load_config()
@@ -77,7 +80,10 @@ def get_analyzer():
 def get_editor():
     global _editor
     if _editor is None:
-        _editor = Editor()
+        _editor = Editor(
+            layout=config.get('LAYOUT', 'stack'),
+            show_captions=config.get('CAPTIONS', True)
+        )
     return _editor
 
 def get_uploader():
@@ -90,7 +96,8 @@ def get_uploader():
 current_video = {
     "path": None,
     "facecam_coords": None,
-    "gameplay_coords": None
+    "gameplay_coords": None,
+    "transcript_words": None
 }
 
 task_manager = TaskManager()
@@ -168,7 +175,7 @@ def twitch_callback():
 
 @app.route('/settings', methods=['GET', 'POST'])
 def handle_settings():
-    global config, _transcriber, _analyzer, _uploader
+    global config, _transcriber, _analyzer, _uploader, _editor
     if request.method == 'GET':
         return jsonify(load_config())
     else:
@@ -180,6 +187,7 @@ def handle_settings():
         _transcriber = None
         _analyzer = None
         _uploader = None
+        _editor = None
         return jsonify({"success": True})
 
 @app.route('/analyze', methods=['POST'])
@@ -198,12 +206,18 @@ def analyze():
             video_path = get_downloader().download_video(url)
             current_video["path"] = video_path
 
-            task_manager.update_task(task_id, "transcribing", progress=40)
+            task_manager.update_task(task_id, "transcribing", progress=30)
             audio_path = get_downloader().extract_audio(video_path)
-            transcript = get_transcriber().transcribe(audio_path)
+            transcript_data = get_transcriber().transcribe(audio_path)
+            current_video["transcript_words"] = transcript_data.get("words")
 
-            task_manager.update_task(task_id, "analyzing", progress=70)
-            clips = get_analyzer().find_viral_clips(transcript)
+            task_manager.update_task(task_id, "audio_analysis", progress=60)
+            audio_analyzer = AudioAnalyzer(audio_path)
+            hype_segments = audio_analyzer.get_hype_segments()
+
+            task_manager.update_task(task_id, "analyzing", progress=80)
+            # Pass hype segments to analyzer for better results
+            clips = get_analyzer().find_viral_clips(transcript_data, hype_segments=hype_segments)
 
             task_manager.update_task(task_id, "detecting_facecam", progress=90)
             sample_times = [300, 600, 1200]
@@ -212,7 +226,8 @@ def analyze():
                 if extract_screenshot(video_path, t, screenshot_path):
                     coords = get_analyzer().detect_facecam(screenshot_path)
                     if coords and coords.get('facecam'):
-                        current_video["facecam_coords"] = coords.get('facecam')
+                        refined_face = refine_facecam_crop(screenshot_path, coords.get('facecam'))
+                        current_video["facecam_coords"] = refined_face
                         current_video["gameplay_coords"] = coords.get('gameplay')
                         break
 
@@ -284,7 +299,8 @@ def export():
                 facecam,
                 gameplay,
                 output_filename,
-                use_gpu=config.get('USE_GPU', False)
+                use_gpu=config.get('USE_GPU', False),
+                transcript_words=current_video.get("transcript_words")
             )
             task_manager.update_task(task_id, "completed", progress=100, result={"path": output_path})
         except Exception as e:

@@ -105,6 +105,8 @@ window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('set-tiktok-session').value = settings.TIKTOK_SESSION_ID || '';
             document.getElementById('set-gpu').checked = settings.USE_GPU || false;
             document.getElementById('set-whisper-model').value = settings.WHISPER_MODEL || 'base';
+            document.getElementById('set-layout').value = settings.LAYOUT || 'stack';
+            document.getElementById('set-captions').checked = settings.CAPTIONS !== undefined ? settings.CAPTIONS : true;
 
             if (settings.TWITCH_ACCESS_TOKEN) {
                 twitchLoginBtn.textContent = 'Twitch: Eingeloggt ✓';
@@ -133,7 +135,9 @@ saveSettingsBtn.addEventListener('click', async () => {
         YOUTUBE_JSON_PATH: document.getElementById('set-youtube-json').value,
         TIKTOK_SESSION_ID: document.getElementById('set-tiktok-session').value,
         USE_GPU: document.getElementById('set-gpu').checked,
-        WHISPER_MODEL: document.getElementById('set-whisper-model').value
+        WHISPER_MODEL: document.getElementById('set-whisper-model').value,
+        LAYOUT: document.getElementById('set-layout').value,
+        CAPTIONS: document.getElementById('set-captions').checked
     };
 
     try {

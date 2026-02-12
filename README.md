@@ -6,8 +6,11 @@ Ein KI-gestütztes Tool zur automatischen Erstellung von viralen Twitch-Clips (9
 - **Unbegrenzte Länge**: Unterstützt 4-6 Stunden Streams durch optimierte Prompting-Strategie.
 - **Social Media Upload**: Direkter Upload zu **YouTube Shorts** und Vorbereitung für **TikTok**.
 - **Twitch Integration**: Direkte Links zum manuellen Clipping auf Twitch.
-- **KI-Analyse (Enhanced)**: Gemini 1.5 Pro generiert automatisch SEO-Titel, Beschreibungen und Hashtags.
-- **Settings Tab**: Zentrale Verwaltung von API-Keys, Social Logins und Performance (GPU NVENC).
+- **Hype-Erkennung**: Verwendet Audio-RMS-Analyse, um Lachen, Schreien und Spitzenmomente präzise zu finden.
+- **KI-Analyse (Enhanced)**: Gemini 1.5 Pro nutzt Audio-Heatmaps, um SEO-Titel, Beschreibungen und Hashtags zu optimieren.
+- **Automatische Untertitel**: Generiert animierte "Viral-Style" Untertitel für jeden Clip.
+- **Mehrere Layouts**: Wähle zwischen "Stack" (Facecam oben) und "Overlay" (Facecam klein in der Ecke).
+- **Settings Tab**: Zentrale Verwaltung von API-Keys, Social Logins, Layouts und Performance (GPU NVENC).
 - **Batch Export**: Alle identifizierten Clips mit einem Klick exportieren.
 - **Download**: Lädt Twitch-VODs in höchster Qualität herunter (yt-dlp).
 - **Transkription**: Lokale KI-Transkription mit Wort-Timestamps (Faster-Whisper).
