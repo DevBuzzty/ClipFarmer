@@ -4,11 +4,9 @@ import uuid
 import threading
 import time
 import logging
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from dotenv import load_dotenv
+import sys
 
-# Setup logging
+# Setup logging immediately
 logging.basicConfig(
     filename='backend.log',
     level=logging.INFO,
@@ -16,6 +14,9 @@ logging.basicConfig(
 )
 
 try:
+    from flask import Flask, request, jsonify
+    from flask_cors import CORS
+    from dotenv import load_dotenv
     from downloader import Downloader
     from transcriber import Transcriber
     from analyzer import Analyzer

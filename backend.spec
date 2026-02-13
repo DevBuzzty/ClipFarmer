@@ -1,61 +1,52 @@
 # -*- mode: python ; coding: utf-8 -*-
 import sys
 import os
-from PyInstaller.utils.hooks import collect_all
+from PyInstaller.utils.hooks import collect_all, collect_submodules, copy_metadata
 
 datas = []
 binaries = []
 hiddenimports = [
     'flask',
     'flask_cors',
-    'requests',
     'google.genai',
-    'dotenv',
-    'pydub',
-    'numpy',
+    'moviepy',
+    'yt_dlp',
+    'PIL',
     'cv2',
-    'werkzeug',
-    'jinja2',
-    'itsdangerous',
-    'click',
-    'blinker',
-    'moviepy'
+    'numpy',
+    'pydub'
 ]
 
-# Collect everything from these complex packages
-packages = [
+# Collect everything from these specific complex/heavy packages
+# We exclude standard flask/werkzeug from collect_all as it often interferes with hooks
+packages_to_collect = [
     'faster_whisper',
     'ctranslate2',
     'onnxruntime',
-    'moviepy',
-    'flask',
-    'flask_cors',
     'google.genai',
-    'requests',
-    'werkzeug',
-    'jinja2',
-    'itsdangerous',
-    'click',
-    'blinker',
-    'dotenv',
-    'PIL',
-    'cv2',
-    'yt_dlp',
-    'googleapiclient'
+    'moviepy',
+    'yt_dlp'
 ]
 
-for package in packages:
+for package in packages_to_collect:
     try:
         tmp_ret = collect_all(package)
         datas += tmp_ret[0]
         binaries += tmp_ret[1]
         hiddenimports += tmp_ret[2]
+        # Metadata is important for some packages to identify versions
+        datas += copy_metadata(package)
     except Exception as e:
         print(f"Warning: Could not collect all for {package}: {e}")
 
+# Extra safety for Flask
+hiddenimports += collect_submodules('flask')
+hiddenimports += collect_submodules('flask_cors')
+datas += copy_metadata('flask')
+
 a = Analysis(
     ['backend/app.py'],
-    pathex=[],
+    pathex=['backend'],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,

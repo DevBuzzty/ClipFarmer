@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
-    "build-backend": "pyinstaller --noconfirm --distpath frontend/backend_dist backend.spec",
+    "build-backend": "python -m PyInstaller --noconfirm --distpath frontend/backend_dist backend.spec",
     "dist": "npm run build-backend && npm run build"
   },
   "build": {
