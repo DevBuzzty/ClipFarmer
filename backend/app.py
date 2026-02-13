@@ -3,18 +3,31 @@ import json
 import uuid
 import threading
 import time
+import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-from downloader import Downloader
-from transcriber import Transcriber
-from analyzer import Analyzer
-from editor import Editor
-from audio_analyzer import AudioAnalyzer
-from uploader import SocialUploader
-from task_manager import TaskManager
-from utils import extract_screenshot, refine_facecam_crop
+# Setup logging
+logging.basicConfig(
+    filename='backend.log',
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s: %(message)s'
+)
+
+try:
+    from downloader import Downloader
+    from transcriber import Transcriber
+    from analyzer import Analyzer
+    from editor import Editor
+    from audio_analyzer import AudioAnalyzer
+    from uploader import SocialUploader
+    from task_manager import TaskManager
+    from utils import extract_screenshot, refine_facecam_crop
+except Exception as e:
+    logging.error(f"Import error: {e}")
+    import sys
+    sys.exit(1)
 
 load_dotenv()
 
@@ -167,4 +180,10 @@ def export():
     return jsonify({"task_id": task_id})
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5001)
+    try:
+        logging.info("Starting backend server on port 5001...")
+        app.run(host='127.0.0.1', port=5001)
+    except Exception as e:
+        logging.error(f"Failed to start server: {e}")
+        import sys
+        sys.exit(1)

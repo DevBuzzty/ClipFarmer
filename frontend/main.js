@@ -33,7 +33,10 @@ function startBackend() {
     if (isDev) {
         backendPath = path.join(__dirname, '../backend/app.py');
         args = [backendPath];
-        pythonProcess = spawn('python', args, { env: { ...process.env, PORT: port } });
+        pythonProcess = spawn('python', args, {
+            cwd: path.join(__dirname, '../backend'),
+            env: { ...process.env, PORT: port }
+        });
     } else {
         const possiblePaths = [
             path.join(process.resourcesPath, 'backend', 'app.exe'),
@@ -41,19 +44,31 @@ function startBackend() {
         ];
         backendPath = possiblePaths.find(p => fs.existsSync(p));
         if (backendPath) {
-            pythonProcess = spawn(backendPath, [], { windowsHide: true, env: { ...process.env, PORT: port } });
+            pythonProcess = spawn(backendPath, [], {
+                windowsHide: true,
+                cwd: path.dirname(backendPath),
+                env: { ...process.env, PORT: port }
+            });
         } else {
             dialog.showErrorBox("Backend Error", "Konnte app.exe nicht finden.");
         }
     }
 
     if (pythonProcess) {
+        let errorData = "";
+        pythonProcess.stderr.on('data', (data) => {
+            errorData += data.toString();
+            console.error(`Backend Error: ${data}`);
+        });
+
         pythonProcess.on('error', (err) => {
             dialog.showErrorBox("Backend Startfehler", err.message);
         });
+
         pythonProcess.on('exit', (code) => {
             if (code !== 0 && code !== null) {
-                dialog.showErrorBox("Backend Exit", `Backend beendet mit Code ${code}`);
+                const message = errorData || `Backend beendet mit Code ${code}`;
+                dialog.showErrorBox("Backend Exit", message);
             }
         });
     }

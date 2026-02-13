@@ -25,6 +25,8 @@ hiddenimports = [
 # Collect everything from these complex packages
 packages = [
     'faster_whisper',
+    'ctranslate2',
+    'onnxruntime',
     'moviepy',
     'flask',
     'flask_cors',
@@ -38,7 +40,8 @@ packages = [
     'dotenv',
     'PIL',
     'cv2',
-    'yt_dlp'
+    'yt_dlp',
+    'googleapiclient'
 ]
 
 for package in packages:
