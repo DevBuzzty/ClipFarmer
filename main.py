@@ -71,7 +71,7 @@ class ViraFlowApp:
         # Header
         header = ft.Container(
             content=ft.Row([
-                ft.Text("VIRAFLOW", size=24, weight="bold", color=ACCENT_BLUE, letter_spacing=2),
+                ft.Text("VIRAFLOW", size=24, weight="bold", color=ACCENT_BLUE),
                 ft.Row([
                     ft.TextButton("ANALYSE", on_click=lambda _: self.switch_view("analyze"), style=ft.ButtonStyle(color=TEXT_MAIN)),
                     ft.TextButton("EINSTELLUNGEN", on_click=lambda _: self.switch_view("settings"), style=ft.ButtonStyle(color=TEXT_MAIN)),
@@ -263,7 +263,7 @@ class ViraFlowApp:
                     ])
                 ]),
                 padding=20,
-                bgcolor=ft.colors.with_opacity(0.1, ft.colors.WHITE),
+                bgcolor=ft.colors.with_opacity(ft.colors.WHITE, 0.1),
                 border=ft.border.all(1, "white10"),
                 border_radius=15,
                 col={"sm": 12, "md": 6, "lg": 4}
