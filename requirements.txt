@@ -8,6 +8,5 @@ Pillow>=10.2.0
 flet>=0.21.0
 pyinstaller>=6.4.0
 google-api-python-client>=2.122.0
-pydub>=0.25.1
 numpy>=1.26.0
 requests>=2.31.0

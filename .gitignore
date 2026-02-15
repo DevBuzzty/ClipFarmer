@@ -13,4 +13,4 @@ backend.log
 *.mp4
 *.mp3
 *.jpg
-!backend.spec
+!flet_build.spec
