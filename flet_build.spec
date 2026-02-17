@@ -19,7 +19,10 @@ hiddenimports = [
     'PIL',
     'cv2',
     'numpy',
-    'faster_whisper'
+    'faster_whisper',
+    'imageio',
+    'decorator',
+    'tqdm'
 ]
 
 packages_to_collect = [
@@ -29,7 +32,10 @@ packages_to_collect = [
     'onnxruntime',
     'google.genai',
     'moviepy',
-    'yt_dlp'
+    'yt_dlp',
+    'imageio',
+    'decorator',
+    'tqdm'
 ]
 
 for package in packages_to_collect:
